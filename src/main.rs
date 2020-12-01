@@ -5,7 +5,58 @@ use pest_derive::*;
 #[grammar = "zeroconf.pest"]
 pub struct ZeroConfParser;
 
-fn main() {}
+fn main() {
+    let pairs = ZeroConfParser::parse(
+        Rule::filter,
+        "name=\"hades-canyon\" domain=\"local\" kind=\"_rust._tcp\"",
+    )
+    .unwrap_or_else(|e| panic!("{}", e));
+    for pair in pairs {
+        // A pair is a combination of the rule which matched and a span of input
+        println!("Rule:    {:?}", pair.as_rule());
+        println!("Span:    {:?}", pair.as_span());
+        println!("Text:    {}", pair.as_str());
+
+        // A pair can be converted to an iterator of the tokens which make it up:
+        for i1p in pair.into_inner() {
+            match i1p.as_rule() {
+                Rule::term => {
+                    println!("Term:  {}", i1p.as_str());
+                    for i2p in i1p.into_inner() {
+                        match i2p.as_rule() {
+                            Rule::full_kind => {
+                                println!("Kind: {}", i2p.as_str());
+                                for i3p in i2p.into_inner() {
+                                    match i3p.as_rule() {
+                                        Rule::kind => {
+                                            println!("Kind: {}", i3p.as_str());
+                                            for i4p in i3p.into_inner() {
+                                                match i4p.as_rule() {
+                                                    Rule::full_stype => {
+                                                        println!("Type: {}", i4p.as_str())
+                                                    }
+                                                    Rule::full_protocol => {
+                                                        println!("Protocol: {}", i4p.as_str())
+                                                    }
+                                                    _ => unreachable!(),
+                                                }
+                                            }
+                                        }
+                                        _ => unreachable!(),
+                                    }
+                                }
+                            }
+                            Rule::full_name => println!("Name: {}", i2p.as_str()),
+                            Rule::full_domain => println!("Domain: {}", i2p.as_str()),
+                            _ => unreachable!(),
+                        }
+                    }
+                }
+                _ => unreachable!(),
+            }
+        }
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::ZeroConfParser;
