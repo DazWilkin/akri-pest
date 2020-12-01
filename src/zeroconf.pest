@@ -2,7 +2,7 @@ tcp = { "tcp" }
 udp = { "udp" }
 sctp = { "sctp" }
 
-name = { ASCII_ALPHA_LOWER+ }
+name = { ASCII_ALPHANUMERIC ~ ( ( ASCII_ALPHANUMERIC ~ HYPHEN ~ ASCII_ALPHANUMERIC ) | ASCII_ALPHANUMERIC )* }
 full_name = { "name=\"" ~ name ~ "\"" }
 
 domain = { ASCII_ALPHA_LOWER+ }
@@ -19,4 +19,4 @@ full_kind = { "kind=\"" ~ kind ~ "\"" }
 
 term = { full_kind | full_domain | full_name }
 
-filter = { ( term | ( term ~ SPACE_SEPARATOR ~ term ) | ( term ~ SPACE_SEPARATOR ~ term ~ SPACE_SEPARATOR ~ term) ) }
+filter = { term ~ ( SPACE_SEPARATOR ~ term )* }
