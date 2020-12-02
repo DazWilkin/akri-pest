@@ -8,9 +8,10 @@ pub struct ZeroConfParser;
 fn main() {
     let pairs = ZeroConfParser::parse(
         Rule::filter,
-        "name=\"hades-canyon\" domain=\"local\" kind=\"_rust._tcp\"",
+        "name=\"hades-canyon\" domain=\"local\" kind=\"_rust._tcp\" port=\"8080\"",
     )
     .unwrap_or_else(|e| panic!("{}", e));
+
     for pair in pairs {
         // A pair is a combination of the rule which matched and a span of input
         println!("Rule:    {:?}", pair.as_rule());
@@ -68,12 +69,14 @@ mod tests {
     const TCP: &str = "tcp";
     const RUST: &str = "rust";
     const DOMAIN: &str = "local";
+    const PORT: &str = "8080";
 
     lazy_static! {
         static ref FULL_NAME: String = format!("name=\"{}\"", NAME);
         static ref KIND: String = format!("_{}._{}", RUST, TCP);
         static ref FULL_KIND: String = format!("kind=\"{}\"", *KIND);
         static ref FULL_DOMAIN: String = format!("domain=\"{}\"", DOMAIN);
+        static ref FULL_PORT: String = format!("port={}", PORT);
     }
 
     #[test]
@@ -84,19 +87,6 @@ mod tests {
             rule:Rule::name,
             tokens:[
                 name(0,12)
-            ]
-        }
-    }
-    #[test]
-    fn test_full_name() {
-        parses_to! {
-            parser:ZeroConfParser,
-            input:&FULL_NAME,
-            rule:Rule::full_name,
-            tokens:[
-                full_name(0,19,[
-                    name(6,18)
-                ])
             ]
         }
     }
@@ -143,35 +133,9 @@ mod tests {
             rule:Rule::kind,
             tokens:[
                 kind(0,10,[
-                    full_stype(0,5,[
-                        stype(1,5)
-                    ]),
-                    full_protocol(6,10,[
-                        protocol(7,10,[
-                            tcp(7,10)
-                        ])
-                    ])
-                ])
-            ]
-        }
-    }
-    #[test]
-    fn test_full_kind() {
-        parses_to! {
-            parser:ZeroConfParser,
-            input:&FULL_KIND,
-            rule:Rule::full_kind,
-            tokens:[
-                full_kind(0,17,[
-                    kind(6,16,[
-                        full_stype(6,11,[
-                            stype(7,11)
-                        ]),
-                        full_protocol(12,16,[
-                            protocol(13,16,[
-                                tcp(13,16)
-                            ])
-                        ])
+                    stype(1,5),
+                    protocol(7,10,[
+                        tcp(7,10)
                     ])
                 ])
             ]
@@ -189,17 +153,15 @@ mod tests {
         };
     }
     #[test]
-    fn test_full_domain() {
+    fn test_port() {
         parses_to! {
             parser:ZeroConfParser,
-            input:&FULL_DOMAIN,
-            rule: Rule::full_domain,
+            input:PORT,
+            rule:Rule::port,
             tokens:[
-                full_domain(0,14,[
-                    domain(8,13)
-                ])
+                port(0,4)
             ]
-        };
+        }
     }
     #[test]
     fn test_term_kind() {
@@ -209,16 +171,10 @@ mod tests {
             rule:Rule::term,
             tokens:[
                 term(0,17,[
-                    full_kind(0,17,[
-                        kind(6,16,[
-                            full_stype(6,11,[
-                                stype(7,11)
-                            ]),
-                            full_protocol(12,16,[
-                                protocol(13,16,[
-                                    tcp(13,16)
-                                ])
-                            ])
+                    kind(6,16,[
+                        stype(7,11),
+                        protocol(13,16,[
+                            tcp(13,16)
                         ])
                     ])
                 ])
@@ -233,9 +189,7 @@ mod tests {
             rule:Rule::term,
             tokens:[
                 term(0,14,[
-                    full_domain(0,14,[
-                        domain(8,13)
-                    ])
+                    domain(8,13)
                 ])
             ]
         }
@@ -254,27 +208,17 @@ mod tests {
             tokens:[
                 filter(0,32,[
                     term(0,17,[
-                        full_kind(0,17,[
-                            kind(6,16,[
-                                full_stype(6,11,[
-                                    stype(7,11)
-                                ]),
-                                full_protocol(12,16,[
-                                    protocol(13,16,[
-                                        tcp(13,16)
-                                    ])
-                                ])
+                        kind(6,16,[
+                            stype(7,11),
+                            protocol(13,16,[
+                                tcp(13,16)
                             ])
                         ])
-                    ]
-                    ),
+                    ]),
                     term(18,32,[
-                        full_domain(18,32,[
-                            domain(26,31)
-                        ])
+                        domain(26,31)
                     ])
-                ])
-            ]
+            ])]
         };
     }
     #[test]
@@ -291,21 +235,13 @@ mod tests {
             tokens:[
                 filter(0,32,[
                     term(0,14,[
-                        full_domain(0,14,[
-                            domain(8,13)
-                        ])
+                        domain(8,13)
                     ]),
                     term(15,32,[
-                        full_kind(15,32,[
-                            kind(21,31,[
-                                full_stype(21,26,[
-                                    stype(22,26)
-                                ]),
-                                full_protocol(27,31,[
-                                    protocol(28,31,[
-                                        tcp(28,31)
-                                    ])
-                                ])
+                        kind(21,31,[
+                            stype(22,26),
+                            protocol(28,31,[
+                                tcp(28,31)
                             ])
                         ])
                     ])
@@ -327,28 +263,18 @@ mod tests {
             tokens:[
                 filter(0,52,[
                     term(0,14,[
-                        full_domain(0,14,[
                             domain(8,13)
-                        ])
                     ]),
                     term(15,32,[
-                        full_kind(15,32,[
-                            kind(21,31,[
-                                full_stype(21,26,[
-                                    stype(22,26)
-                                ]),
-                                full_protocol(27,31,[
-                                    protocol(28,31,[
-                                        tcp(28,31)
-                                    ])
-                                ])
+                        kind(21,31,[
+                            stype(22,26),
+                            protocol(28,31,[
+                                tcp(28,31)
                             ])
                         ])
                     ]),
                     term(33,52,[
-                        full_name(33,52,[
-                            name(39,51)
-                        ])
+                        name(39,51)
                     ])
                 ])
             ]
