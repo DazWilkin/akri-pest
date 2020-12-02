@@ -5,58 +5,71 @@ use pest_derive::*;
 #[grammar = "zeroconf.pest"]
 pub struct ZeroConfParser;
 
+#[derive(Debug)]
+enum Protocol {
+    TCP,
+    UDP,
+    SCTP,
+}
+impl Default for Protocol {
+    fn default() -> Self {
+        Protocol::TCP
+    }
+}
+impl Protocol {
+    fn parse(p: &str) -> Protocol {
+        match p {
+            "tcp" => Protocol::TCP,
+            "udp" => Protocol::UDP,
+            "sctp" => Protocol::SCTP,
+            _ => unreachable!(),
+        }
+    }
+}
+#[derive(Default, Debug)]
+struct Filter {
+    name: String,
+    domain: String,
+    stype: String,
+    port: u16,
+    protocol: Protocol,
+}
+impl Filter {
+    fn new() -> Filter {
+        Filter {
+            ..Default::default()
+        }
+    }
+}
 fn main() {
-    let pairs = ZeroConfParser::parse(
-        Rule::filter,
-        "name=\"hades-canyon\" domain=\"local\" kind=\"_rust._tcp\" port=\"8080\"",
-    )
-    .unwrap_or_else(|e| panic!("{}", e));
+    let example = "name=\"freddie\" domain=\"local\" kind=\"_rust._tcp\" port=\"8080\" host_name=\"freddie.local\"";
+    print!("{:?}", parse(example));
+}
+fn parse(filter: &str) -> Filter {
+    let filter = ZeroConfParser::parse(Rule::filter, filter).unwrap_or_else(|e| panic!("{}", e));
 
-    for pair in pairs {
-        // A pair is a combination of the rule which matched and a span of input
-        println!("Rule:    {:?}", pair.as_rule());
-        println!("Span:    {:?}", pair.as_span());
-        println!("Text:    {}", pair.as_str());
+    let mut result: Filter = Filter::new();
 
-        // A pair can be converted to an iterator of the tokens which make it up:
-        for i1p in pair.into_inner() {
-            match i1p.as_rule() {
-                Rule::term => {
-                    println!("Term:  {}", i1p.as_str());
-                    for i2p in i1p.into_inner() {
-                        match i2p.as_rule() {
-                            Rule::full_kind => {
-                                println!("Kind: {}", i2p.as_str());
-                                for i3p in i2p.into_inner() {
-                                    match i3p.as_rule() {
-                                        Rule::kind => {
-                                            println!("Kind: {}", i3p.as_str());
-                                            for i4p in i3p.into_inner() {
-                                                match i4p.as_rule() {
-                                                    Rule::full_stype => {
-                                                        println!("Type: {}", i4p.as_str())
-                                                    }
-                                                    Rule::full_protocol => {
-                                                        println!("Protocol: {}", i4p.as_str())
-                                                    }
-                                                    _ => unreachable!(),
-                                                }
-                                            }
-                                        }
-                                        _ => unreachable!(),
-                                    }
-                                }
-                            }
-                            Rule::full_name => println!("Name: {}", i2p.as_str()),
-                            Rule::full_domain => println!("Domain: {}", i2p.as_str()),
+    for terms in filter {
+        for term in terms.into_inner() {
+            match term.as_rule() {
+                Rule::name => result.name = term.as_str().to_string(),
+                Rule::kind => {
+                    for i3p in term.into_inner() {
+                        match i3p.as_rule() {
+                            Rule::stype => result.stype = i3p.as_str().to_string(),
+                            Rule::protocol => result.protocol = Protocol::parse(i3p.as_str()),
                             _ => unreachable!(),
                         }
                     }
                 }
+                Rule::domain => result.domain = term.as_str().to_string(),
+                Rule::port => result.port = term.as_str().to_string().parse::<u16>().unwrap(),
                 _ => unreachable!(),
             }
         }
     }
+    result
 }
 #[cfg(test)]
 mod tests {
@@ -170,12 +183,10 @@ mod tests {
             input:&FULL_KIND,
             rule:Rule::term,
             tokens:[
-                term(0,17,[
-                    kind(6,16,[
-                        stype(7,11),
-                        protocol(13,16,[
-                            tcp(13,16)
-                        ])
+                kind(6,16,[
+                    stype(7,11),
+                    protocol(13,16,[
+                        tcp(13,16)
                     ])
                 ])
             ]
@@ -188,61 +199,52 @@ mod tests {
             input:&FULL_DOMAIN,
             rule:Rule::term,
             tokens:[
-                term(0,14,[
-                    domain(8,13)
-                ])
+                domain(8,13)
             ]
         }
     }
     #[test]
     fn test_filter_kind_domain() {
-        let f = format!("{} {}", *FULL_KIND, *FULL_DOMAIN);
-        println!("{:?} [{}]", f, f.len());
+        let filter = format!("{} {}", *FULL_KIND, *FULL_DOMAIN);
+        println!("{:?} [{}]", filter, filter.len());
         parses_to! {
             parser:ZeroConfParser,
-            input:&f,
+            input:&filter,
             rule:Rule::filter,
             // 00000000001111111111222222222233
             // 01234567890123456789012345678901
             // kind="_rust._tcp" domain="local"
             tokens:[
                 filter(0,32,[
-                    term(0,17,[
-                        kind(6,16,[
-                            stype(7,11),
-                            protocol(13,16,[
-                                tcp(13,16)
-                            ])
+                    kind(6,16,[
+                        stype(7,11),
+                        protocol(13,16,[
+                            tcp(13,16)
                         ])
                     ]),
-                    term(18,32,[
-                        domain(26,31)
-                    ])
-            ])]
+                    domain(26,31)
+                ])
+            ]
         };
     }
     #[test]
     fn test_filter_domain_kind() {
-        let f = format!("{} {}", *FULL_DOMAIN, *FULL_KIND);
-        println!("{:?} [{}]", f, f.len());
+        let filter = format!("{} {}", *FULL_DOMAIN, *FULL_KIND);
+        println!("{:?} [{}]", filter, filter.len());
         parses_to! {
             parser:ZeroConfParser,
-            input:&f,
+            input:&filter,
             rule:Rule::filter,
             // 00000000001111111111222222222233
             // 01234567890123456789012345678901
             // domain="local" kind="_rust._tcp"
             tokens:[
                 filter(0,32,[
-                    term(0,14,[
-                        domain(8,13)
-                    ]),
-                    term(15,32,[
-                        kind(21,31,[
-                            stype(22,26),
-                            protocol(28,31,[
-                                tcp(28,31)
-                            ])
+                    domain(8,13),
+                    kind(21,31,[
+                        stype(22,26),
+                        protocol(28,31,[
+                            tcp(28,31)
                         ])
                     ])
                 ])
@@ -251,31 +253,25 @@ mod tests {
     }
     #[test]
     fn test_filter_domain_kind_name() {
-        let f = format!("{} {} {}", *FULL_DOMAIN, *FULL_KIND, *FULL_NAME);
-        println!("{:?} [{}]", f, f.len());
+        let filter = format!("{} {} {}", *FULL_DOMAIN, *FULL_KIND, *FULL_NAME);
+        println!("{:?} [{}]", filter, filter.len());
         parses_to! {
             parser:ZeroConfParser,
-            input:&f,
+            input:&filter,
             rule:Rule::filter,
             // 00000000001111111111222222222233333333334444444444555
             // 01234567890123456789012345678901234567890123456789012
             // domain="local" kind="_rust._tcp" name="hades-canyon"X
             tokens:[
                 filter(0,52,[
-                    term(0,14,[
-                            domain(8,13)
-                    ]),
-                    term(15,32,[
-                        kind(21,31,[
-                            stype(22,26),
-                            protocol(28,31,[
-                                tcp(28,31)
-                            ])
+                    domain(8,13),
+                    kind(21,31,[
+                        stype(22,26),
+                        protocol(28,31,[
+                            tcp(28,31)
                         ])
                     ]),
-                    term(33,52,[
-                        name(39,51)
-                    ])
+                    name(39,51)
                 ])
             ]
         };

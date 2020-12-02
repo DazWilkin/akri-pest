@@ -1,3 +1,8 @@
+// ZeroConf
+// Service Filtering
+// E.g. { name: "hades-canyon", kind: "_http._tcp", domain: "local", host_name: "hades-canyon.local", address: "10.1.49.1", port: 8080, txt: ... }
+// NB `host_name` may always be represented by `name` and `domain`
+
 // DNS (!) permitted name parts
 // It's permitted to use hyphens but these must occur at most once (!) between alphanumeric
 name = { ASCII_ALPHANUMERIC ~ ( ( ASCII_ALPHANUMERIC ~ HYPHEN ~ ASCII_ALPHANUMERIC ) | ASCII_ALPHANUMERIC )* }
@@ -27,7 +32,7 @@ full_kind = _{ "kind=\"" ~ kind ~ "\"" }
 port = { ASCII_DIGIT{1,5} }
 full_port = _{ "port=\"" ~ port ~ "\"" }
 
-term = { full_kind | full_domain | full_name | full_port }
+term = _{ full_kind | full_domain | full_name | full_port }
 
 // Permits repetition but doesn't eliminate duplication
 filter = { term ~ ( SPACE_SEPARATOR* ~ term )* }
