@@ -1,22 +1,33 @@
+// DNS (!) permitted name parts
+// It's permitted to use hyphens but these must occur at most once (!) between alphanumeric
+name = { ASCII_ALPHANUMERIC ~ ( ( ASCII_ALPHANUMERIC ~ HYPHEN ~ ASCII_ALPHANUMERIC ) | ASCII_ALPHANUMERIC )* }
+full_name = _{ "name=\"" ~ name ~ "\"" }
+
+domain = { ASCII_ALPHA_LOWER+ }
+full_domain = _{ "domain=\"" ~ domain ~ "\"" }
+
+// It may be redundant to define these as constants!?
 tcp = { "tcp" }
 udp = { "udp" }
 sctp = { "sctp" }
 
-name = { ASCII_ALPHANUMERIC ~ ( ( ASCII_ALPHANUMERIC ~ HYPHEN ~ ASCII_ALPHANUMERIC ) | ASCII_ALPHANUMERIC )* }
-full_name = { "name=\"" ~ name ~ "\"" }
-
-domain = { ASCII_ALPHA_LOWER+ }
-full_domain = { "domain=\"" ~ domain ~ "\"" }
+// Kubernetes (my destination) only permits these protocols
+protocol = { tcp | udp | sctp }
+full_protocol = _{ "_" ~ protocol }
 
 stype = { ASCII_ALPHA_LOWER+ }
-full_stype = { "_" ~ stype }
+full_stype = _{ "_" ~ stype }
 
-protocol = { tcp | udp | sctp }
-full_protocol = { "_" ~ protocol }
-
+// For example `_http._tcp`, `_rust._udp`
 kind = {  full_stype ~ "." ~ full_protocol }
-full_kind = { "kind=\"" ~ kind ~ "\"" }
+full_kind = _{ "kind=\"" ~ kind ~ "\"" }
 
-term = { full_kind | full_domain | full_name }
+// Although numberic, wrapping in quotes to help delimit
+// Otherwise `123456` is matched as `12345` and the `6` is swallowed silently
+port = { ASCII_DIGIT{1,5} }
+full_port = _{ "port=\"" ~ port ~ "\"" }
 
-filter = { term ~ ( SPACE_SEPARATOR ~ term )* }
+term = { full_kind | full_domain | full_name | full_port }
+
+// Permits repetition but doesn't eliminate duplication
+filter = { term ~ ( SPACE_SEPARATOR* ~ term )* }
