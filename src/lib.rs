@@ -20,6 +20,11 @@ pub fn parse(filter: &str) -> Result<Filter, ParseError> {
             "`host_name` in filter is ignored. Use `name` and `domain` instead",
         ));
     }
+    if filter.contains("txt") {
+        return Err(ParseError::new(
+            "`txt` in filter is ignored.",
+        ))
+    }
 
     let filter = ZeroConfParser::parse(Rule::filter, filter).unwrap_or_else(|e| panic!("{}", e));
 
