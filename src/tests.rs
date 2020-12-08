@@ -29,26 +29,13 @@ fn test_name() {
     }
 }
 #[test]
-fn test_tcp() {
-    parses_to! {
-        parser: ZeroConfParser,
-            input: TCP,
-                rule: Rule:: tcp,
-                    tokens: [
-                        tcp(0, 3)
-                    ]
-    };
-}
-#[test]
 fn test_protocol() {
     parses_to! {
         parser: ZeroConfParser,
             input: TCP,
                 rule: Rule:: protocol,
                     tokens: [
-                        protocol(0, 3, [
-                            tcp(0, 3)
-                        ])
+                        protocol(0, 3)
                     ]
     };
 }
@@ -72,9 +59,7 @@ fn test_kind() {
                     tokens: [
                         kind(0, 10, [
                             stype(1, 5),
-                            protocol(7, 10, [
-                                tcp(7, 10)
-                            ])
+                            protocol(7, 10)
                         ])
                     ]
     }
@@ -110,9 +95,7 @@ fn test_term_kind() {
                     tokens: [
                         kind(6, 16, [
                             stype(7, 11),
-                            protocol(13, 16, [
-                                tcp(13, 16)
-                            ])
+                            protocol(13, 16)
                         ])
                     ]
     }
@@ -143,9 +126,7 @@ fn test_filter_kind_domain() {
                         filter(0, 32, [
                             kind(6, 16, [
                                 stype(7, 11),
-                                protocol(13, 16, [
-                                    tcp(13, 16)
-                                ])
+                                protocol(13, 16)
                             ]),
                             domain(26, 31)
                         ])
@@ -168,9 +149,7 @@ fn test_filter_domain_kind() {
                             domain(8, 13),
                             kind(21, 31, [
                                 stype(22, 26),
-                                protocol(28, 31, [
-                                    tcp(28, 31)
-                                ])
+                                protocol(28, 31)
                             ])
                         ])
                     ]
@@ -192,9 +171,7 @@ fn test_filter_domain_kind_name() {
                             domain(8, 13),
                             kind(21, 31, [
                                 stype(22, 26),
-                                protocol(28, 31, [
-                                    tcp(28, 31)
-                                ])
+                                protocol(28, 31)
                             ]),
                             name(39, 51)
                         ])

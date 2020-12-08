@@ -4,7 +4,6 @@ mod tests;
 mod filter;
 mod parse_error;
 mod parser;
-mod protocol;
 
 use filter::Filter;
 use parse_error::ParseError;
@@ -13,7 +12,6 @@ use parse_error::ParseError;
 use parser::{Rule, ZeroConfParser};
 
 use pest::Parser;
-use protocol::Protocol;
 
 pub fn parse(filter: &str) -> Result<Filter, ParseError> {
     // Check whether the filter (incorrectly) includes a `host_name` term
@@ -35,7 +33,7 @@ pub fn parse(filter: &str) -> Result<Filter, ParseError> {
                     for i3p in term.into_inner() {
                         match i3p.as_rule() {
                             Rule::stype => result.stype = Some(i3p.as_str().to_string()),
-                            Rule::protocol => result.protocol = Some(Protocol::parse(i3p.as_str())),
+                            Rule::protocol => result.protocol = Some(i3p.as_str().to_string()),
                             _ => return Err(ParseError::new("Unable to parse filter")),
                         }
                     }
@@ -66,7 +64,7 @@ mod xtests {
             name: Some("freddie".to_string()),
             domain: Some("local".to_string()),
             stype: Some("rust".to_string()),
-            protocol: Some(Protocol::TCP),
+            protocol: Some("tcp".to_string()),
             port: Some(8080),
             ..Default::default()
         };

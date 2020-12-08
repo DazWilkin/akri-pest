@@ -1,11 +1,10 @@
-use crate::Protocol;
 #[derive(Default, Debug, PartialEq)]
 pub struct Filter {
     pub name: Option<String>,
     pub domain: Option<String>,
     pub stype: Option<String>,
+    pub protocol: Option<String>,
     pub port: Option<u16>,
-    pub protocol: Option<Protocol>,
 }
 impl Filter {
     pub fn new() -> Filter {
@@ -25,12 +24,12 @@ impl Filter {
 }
 #[cfg(test)]
 mod tests {
-    use super::{Filter, Protocol};
+    use super::Filter;
     #[test]
     fn test_kind() {
         let f = Filter {
             stype: Some("rust".to_string()),
-            protocol: Some(Protocol::TCP),
+            protocol: Some("tcp".to_string()),
             ..Default::default()
         };
         assert_eq!(Some("_rust._tcp".to_string()), f.kind())

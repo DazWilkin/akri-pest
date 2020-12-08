@@ -2,6 +2,7 @@
 // Service Filtering
 // E.g. { name: "hades-canyon", kind: "_http._tcp", domain: "local", host_name: "hades-canyon.local", address: "10.1.49.1", port: 8080, txt: ... }
 // NB `host_name` may always be represented by `name` and `domain`
+// NB `txt` records not implemented
 
 // DNS (!) permitted name parts
 // It's permitted to use hyphens but these must occur at most once (!) between alphanumeric
@@ -11,13 +12,7 @@ full_name = _{ "name=\"" ~ name ~ "\"" }
 domain = { ASCII_ALPHA_LOWER+ }
 full_domain = _{ "domain=\"" ~ domain ~ "\"" }
 
-// It may be redundant to define these as constants!?
-tcp = { "tcp" }
-udp = { "udp" }
-sctp = { "sctp" }
-
-// Kubernetes (my destination) only permits these protocols
-protocol = { tcp | udp | sctp }
+protocol = { ASCII_ALPHA_LOWER+ }
 full_protocol = _{ "_" ~ protocol }
 
 stype = { ASCII_ALPHA_LOWER+ }
