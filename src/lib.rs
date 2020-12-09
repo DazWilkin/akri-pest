@@ -59,7 +59,7 @@ pub fn parse(filter: &str) -> Result<Filter, ParseError> {
 }
 
 #[cfg(test)]
-mod xtests {
+mod filter_tests {
     use super::*;
     #[test]
     fn test_parse() {
